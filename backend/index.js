@@ -122,7 +122,7 @@ const { User } = require('./model/User');
 
 
 // This is your test secret API key.
-const stripe = require("stripe")('sk_test_51Og7yBSBRLWCmKMoAB8y6dbvjPxeJuAPEfITOlCUPqvIxCJ2sgWGjygdHzyTaDd0GgzJ5jjcNHapzpolsn7qa9K300l8BgodoS');
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // const calculateOrderAmount = (items) => {
 //   // Replace this constant with a calculation of the order's amount

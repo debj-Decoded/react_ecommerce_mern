@@ -48,6 +48,16 @@ exports.editOrder = async (req, res) => {
       res.status(400).json(err);
     }
   };
+  
+  exports.fetchOrderById = async (req, res) => {
+    const { id } = req.params;
+    try {
+      const order = await Order.findById(id);
+      res.status(201).json(order);
+    } catch (err) {
+      res.status(400).json(err);
+    }
+  };
 
 exports.fetchAllOrder = async (req, res) => { 
     // sort={_sort:"price",_order="desc"}

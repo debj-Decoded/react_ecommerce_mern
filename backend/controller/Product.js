@@ -29,6 +29,22 @@ exports.fetchAllProduct = async (req, res) => {
         query = query.find({ brand: req.query.brand })
         totalCountProduct = totalCountProduct.find({ brand: req.query.brand })
     }
+
+    if (req.query.q) {
+    const searchRegex = new RegExp(req.query.q, "i"); // case-insensitive
+    const searchCondition = {
+      $or: [
+        { title: searchRegex },       // <-- include title
+        { category: searchRegex },
+        { description: searchRegex },
+        { brand: searchRegex }
+      ]
+    };
+    query = query.find(searchCondition);
+    totalCountProduct = totalCountProduct.find(searchCondition);
+  }
+
+
     if (req.query._sort && req.query._order) {
         query = query.sort({ [req.query._sort]: req.query._order })
     }
@@ -85,3 +101,14 @@ exports.deleteProduct = async (req, res) => {
         res.status(400).json(error)
     }
 }
+exports.getallTotalProducts = async (req, res) => {
+    // const { id } = req.params
+
+    try {
+        const products = await Product.findByIdAndDelete()
+        res.status(201).json(products)
+    } catch (error) {
+        res.status(400).json(error)
+    }
+}
+

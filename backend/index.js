@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const server = express();
 const mongoose = require('mongoose');
@@ -9,14 +11,16 @@ const authRouter = require('./router/Auth')
 const cartRouter = require('./router/Cart')
 const orderRouter = require('./router/Order')
 const { isAuth, sanitizeUser, cookieExtractor } = require('./services/common');
+
 const passport = require('passport');
 const session = require('express-session');
+
 const LocalStrategy = require('passport-local').Strategy
 const crypto = require('crypto');
 const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const jwt = require('jsonwebtoken');
-const cookieParser  =require('cookie-parser')
+const cookieParser = require('cookie-parser')
 
 //jwt strategy
 const SecretKey = 'secret_key'
@@ -31,7 +35,7 @@ const cors = require('cors')
 
 main().catch(err => console.log(err))
 async function main() {
-  await mongoose.connect('mongodb+srv://hogwarvolmir:AdminAdmin@cluster0.djx9uhc.mongodb.net/ecommerce');
+  await mongoose.connect(process.env.Mongoose_URL);
 }
 
 //passport Authentication
@@ -62,7 +66,8 @@ passport.use('local', new LocalStrategy(
           return done(null, false, { message: 'invalid credentials' })
         }
         const token = jwt.sign(sanitizeUser(user), SecretKey);
-        done(null, {token})
+        // done(null, { token })
+        done(null, { id:user.id, role:user.role })
       })
     } catch (error) {
       res.status(400).json(error);
@@ -87,10 +92,10 @@ passport.use('jwt', new JwtStrategy(opts, async function (jwt_payload, done) {
     }
   }
 
-
-
-
 }));
+
+
+
 passport.serializeUser(function (user, cb) {
   process.nextTick(function () {
     return cb(null, sanitizeUser(user));
@@ -110,48 +115,65 @@ server.use(cors({
 }))
 server.use(express.json())//to parse req.body
 server.use('/products', isAuth(), productsRouter.router)
-server.use('/categories',isAuth() ,categoryRouter.router)
-server.use('/brands', isAuth(),brandRouter.router)
-server.use('/users',isAuth(), userRouter.router)
+server.use('/categories', isAuth(), categoryRouter.router)
+server.use('/brands', isAuth(), brandRouter.router)
+server.use('/users', isAuth(), userRouter.router)
 server.use('/auth', authRouter.router)
-server.use('/cart', isAuth(),cartRouter.router)
-server.use('/orders',isAuth(),orderRouter.router)
+server.use('/cart', isAuth(), cartRouter.router)
+server.use('/orders', isAuth(), orderRouter.router)
 const { User } = require('./model/User');
 
 //payment
-
+//payment Intent
 
 // This is your test secret API key.
+// const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-// const calculateOrderAmount = (items) => {
+const calculateOrderAmount = (items) => {
 //   // Replace this constant with a calculation of the order's amount
 //   // Calculate the order total on the server to prevent
 //   // people from directly manipulating the amount on the client
-//   return 1400;
-// };
+  return 1400;
+};
 
 server.post("/create-payment-intent", async (req, res) => {
   const { totalAmount } = req.body;
+  // const { items } = req.body;
 
-  // Create a PaymentIntent with the order amount and currency
+  try {
+    // Create a PaymentIntent with the order amount and currency
   const paymentIntent = await stripe.paymentIntents.create({
-    amount: totalAmount*100,
-    // amount: calculateOrderAmount(items),
-    currency: "inr",
-    // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
-    automatic_payment_methods: {
-      enabled: true,
+  amount: totalAmount * 100,
+  currency: "inr",
+  description: "Order #1234 - Electronics purchase",
+  automatic_payment_methods: { enabled: true },
+  shipping: {
+    name: "John Doe",
+    address: {
+      line1: "123 MG Road",
+      city: "Bengaluru",
+      state: "KA",
+      postal_code: "560001",
+      country: "IN",
     },
-  });
+  },
+});
 
   res.send({
     clientSecret: paymentIntent.client_secret,
   });
+  } catch (error) {
+    console.error("Stripe error:", error);
+    res.status(500).send({ error: error.message });
+
+  }
+  
 });
 
 
-//paymenty
+//payment
+//payment intent
 
 server.get('/', (req, res) => {
   res.json({ status: "success" })
@@ -159,7 +181,7 @@ server.get('/', (req, res) => {
 
 
 
-server.listen(8080, () => {
+server.listen(process.env.PORT, () => {
   console.log("server started")
-  console.log("server started")
+  console.log("recheck server started")
 })

@@ -16,7 +16,9 @@ exports.createUser=async(req,res)=>{
             else{
             const token = jwt.sign(sanitizeUser(doc), SecretKey);
             res.cookie('jwt', token, { expires: new Date(Date.now() + 3600000), httpOnly: true })
-            res.status(201).json(token);}             
+            res.status(201)
+            // .json(token);}             
+            .json({ id:doc.id, role:doc.role });}             
           });        
         })
         // req.login({id:doc.id,role:doc.role}, function(err){
